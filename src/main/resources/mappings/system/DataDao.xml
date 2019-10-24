@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wskj.manage.system.dao.DataDao">
+
+	<sql id="dataColumns">
+		a.id,
+		a.parent_id AS "parent.id",
+		a.parent_ids,
+		a.name,
+		a.sort,
+		a.type,
+		a.grade,
+		a.address,
+		a.intersection_code,
+		a.video_name,
+		a.video_address,
+		a.enterclose,
+		a.remarks,
+		a.create_by AS "createBy.id",
+		a.create_date,
+		a.update_by AS
+		"updateBy.id",
+		a.update_date,
+		a.del_flag,
+		a.useable AS useable
+	</sql>
+
+	<sql id="dataJoins">
+		LEFT JOIN sys_data p ON p.id = a.parent_id
+	</sql>
+
+	<select id="get" resultType="Data">
+		SELECT
+		<include refid="dataColumns" />
+		FROM sys_data a
+		<include refid="dataJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="Data">
+		SELECT
+		<include refid="dataColumns" />
+		FROM sys_data a
+		<include refid="dataJoins" />
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		<!-- 数据范围过滤 -->
+		${sqlMap.dsf}
+		ORDER BY a.parent_id
+	</select>
+
+	<select id="findAllList" resultType="Data">
+		SELECT
+		<include refid="dataColumns" />
+		FROM sys_data a
+		<include refid="dataJoins" />
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		ORDER BY a.parent_id
+	</select>
+
+	<select id="findByParentIdsLike" resultType="Data">
+		SELECT
+		<include refid="dataColumns" />
+		FROM sys_data a
+		<include refid="dataJoins" />
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND a.parent_ids LIKE
+		#{parentIds}
+		ORDER BY a.parent_id
+	</select>
+
+	<insert id="insert">
+		INSERT INTO sys_data(
+		id,
+		parent_id,
+		parent_ids,
+		name,
+		sort,
+		type,
+		grade,
+		address,
+		intersection_code,
+		video_name,
+		video_address,
+		enterclose,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		useable
+		) VALUES (
+		#{id},
+		#{parent.id},
+		#{parentIds},
+		#{name},
+		#{sort},
+		#{type},
+		#{grade},
+		#{address},
+		#{intersectionCode},
+		#{videoName},
+		#{videoAddress},
+		#{enterclose},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{useable}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE sys_data SET
+		parent_id = #{parent.id},
+		parent_ids = #{parentIds},
+		name = #{name},
+		type = #{type},
+		grade = #{grade},
+		address = #{address},
+		intersection_code = #{intersectionCode},
+		video_name = #{videoName},
+		video_address = #{videoAddress},
+		enterclose = #{enterclose},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		useable=#{useable}
+		WHERE id = #{id}
+	</update>
+
+	<update id="updateParentIds">
+		UPDATE sys_data SET
+		parent_id = #{parent.id},
+		parent_ids = #{parentIds}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE sys_data SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id} OR parent_ids LIKE
+		<if test="dbName == 'oracle'">'%,'||#{id}||',%'</if>
+		<if test="dbName == 'mysql'">CONCAT('%,', #{id}, ',%')</if>
+	</update>
+
+</mapper>
