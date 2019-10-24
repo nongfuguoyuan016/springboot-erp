@@ -3,37 +3,28 @@
  */
 package com.wskj.manage.system.web;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
 import com.github.pagehelper.Page;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.wskj.manage.common.utils.JSONResult;
 import com.wskj.manage.common.utils.StringUtils;
 import com.wskj.manage.common.web.BaseController;
 import com.wskj.manage.system.entity.Dict;
-import com.wskj.manage.system.entity.DictAddress;
 import com.wskj.manage.system.service.DictService;
 import com.wskj.manage.system.utils.DictUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 字典Controller
- * @author ganjinhua
- * @version 2014-05-16
  */
-@Controller
+@RestController
 @RequestMapping(value = "${adminPath}/sys/dict")
 public class DictController extends BaseController {
 
@@ -47,14 +38,6 @@ public class DictController extends BaseController {
 		}else{
 			return new Dict();
 		}
-	}
-	
-	@RequiresPermissions("sys:dict:view")
-	@RequestMapping(value = {"list", ""})
-	public String list(Model model) {
-		List<String> typeList = dictService.findTypeList();
-		model.addAttribute("typeList", typeList);
-		return "system/dictList";
 	}
 
 	@RequiresPermissions("sys:dict:view")
@@ -76,28 +59,25 @@ public class DictController extends BaseController {
 	}
 
 	@RequiresPermissions("sys:dict:edit")
-	@RequestMapping(value = "save")//@Valid
-	@ResponseBody
-	public JSONResult save(Dict dict, Model model) {
-//		if (!beanValidator(model, dict)){
-//			return JSONResult.fail("包含非法信息");
-//		}
-		dictService.save(dict);
-		return JSONResult.ok("保存字典'" + dict.getLabel() + "'成功");
+	@PostMapping(value = "save")//@Valid
+	public JSONResult save(Dict dict, BindingResult result) {
+		if (result.hasErrors()) {
+			return JSONResult.fail("包含非法信息");
+		}
+		int res = dictService.save(dict);
+		return res != 0 ? JSONResult.ok("保存字典'" + dict.getLabel() + "'成功") : JSONResult.fail("保存失败,请稍后再试");
 	}
 	
 	@RequiresPermissions("sys:dict:edit")
-	@RequestMapping(value = "delete")
-	@ResponseBody
+	@GetMapping(value = "delete")
 	public JSONResult delete(Dict dict) {
-		dictService.delete(dict);
-		return JSONResult.ok("删除字典成功");
+		int result = dictService.delete(dict);
+		return result != 0 ? JSONResult.ok("删除字典成功") : JSONResult.fail("删除失败,请稍后再试");
 	}
 	
 	@RequiresPermissions("user")
-	@ResponseBody
-	@RequestMapping(value = "treeData")
-	public List<Map<String, Object>> treeData(@RequestParam(required=false) String type, HttpServletResponse response) {
+	@GetMapping(value = "treeData")
+	public JSONResult treeData(@RequestParam(required=false) String type) {
 		List<Map<String, Object>> mapList = Lists.newArrayList();
 		Dict dict = new Dict();
 		dict.setType(type);
@@ -110,20 +90,18 @@ public class DictController extends BaseController {
 			map.put("name", StringUtils.replace(e.getLabel(), " ", ""));
 			mapList.add(map);
 		}
-		return mapList;
+		return JSONResult.ok(mapList);
 	}
 	
-	@ResponseBody
 	@RequestMapping(value = "listData")
-	public List<Dict> listData(@RequestParam(required=false) String type) {
+	public JSONResult listData(@RequestParam(required=false) String type) {
 		Dict dict = new Dict();
 		dict.setType(type);
-		return dictService.findList(dict);
+		return JSONResult.ok(dictService.findList(dict));
 	}
 
-	@RequestMapping(value = "/address/all")
-	@ResponseBody
-	public List<DictAddress> getAllDictAddress() {
-		return DictUtils.getAllDictAddress();
+	@GetMapping(value = "/address/all")
+	public JSONResult getAllDictAddress() {
+		return JSONResult.ok(DictUtils.getAllDictAddress());
 	}
 }

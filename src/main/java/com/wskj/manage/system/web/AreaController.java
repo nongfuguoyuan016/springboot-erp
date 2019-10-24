@@ -4,15 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -25,10 +24,8 @@ import com.wskj.manage.system.utils.UserUtils;
 
 /**
  * 区域Controller
- * @author ganjinhua
- * @version 2013-5-15
  */
-@Controller
+@RestController
 @RequestMapping(value = "${adminPath}/sys/area")
 public class AreaController extends BaseController {
 
@@ -43,48 +40,27 @@ public class AreaController extends BaseController {
 			return new Area();
 		}
 	}
-
-	@RequiresPermissions("sys:area:view")
-	@RequestMapping(value = {"list", ""})
-	public String list(Area area, Model model) {
-		model.addAttribute("list", areaService.findAll());
-		return "system/areaList";
-	}
-
-	@RequiresPermissions("sys:area:view")
-	@RequestMapping(value = "form")
-	public String form(Area area, Model model) {
-		if (area.getParent()==null||area.getParent().getId()==null){
-			area.setParent(UserUtils.getUser().getOffice().getArea());
+	
+	@RequiresPermissions("sys:area:edit")
+	@PostMapping(value = "save")
+	public JSONResult save(@Valid Area area, BindingResult result) {
+		if (result.hasErrors()) {
+			return JSONResult.fail("包含非法信息");
 		}
-		area.setParent(areaService.get(area.getParent().getId()));
-		model.addAttribute("area", area);
-		return "system/areaForm";
+		int res = areaService.save(area);
+		return res != 0 ? JSONResult.ok("保存区域'" + area.getName() + "'成功") : JSONResult.fail("保存失败,请稍后再试");
 	}
 	
 	@RequiresPermissions("sys:area:edit")
-	@RequestMapping(value = "save")
-	@ResponseBody
-	public JSONResult save(Area area, Model model) {
-//		if (!beanValidator(model, area)){
-//			return JSONResult.fail("包含非法信息");
-//		}
-		areaService.save(area);
-		return JSONResult.ok("保存区域'" + area.getName() + "'成功");
-	}
-	
-	@RequiresPermissions("sys:area:edit")
-	@RequestMapping(value = "delete")
-	@ResponseBody
+	@GetMapping(value = "delete")
 	public JSONResult delete(Area area) {
-		areaService.delete(area);
-		return JSONResult.ok("删除区域成功");
+		int result = areaService.delete(area);
+		return result != 0 ? JSONResult.ok("删除区域成功") : JSONResult.fail("删除失败,请稍后再试");
 	}
 
 	@RequiresPermissions("user")
-	@ResponseBody
-	@RequestMapping(value = "treeData")
-	public List<Map<String, Object>> treeData(@RequestParam(required=false) String extId, HttpServletResponse response) {
+	@GetMapping(value = "treeData")
+	public JSONResult treeData(@RequestParam(required=false) String extId) {
 		List<Map<String, Object>> mapList = Lists.newArrayList();
 		List<Area> list = areaService.findAll();
 		for (int i=0; i<list.size(); i++){
@@ -97,6 +73,6 @@ public class AreaController extends BaseController {
 				mapList.add(map);
 			}
 		}
-		return mapList;
+		return JSONResult.ok(mapList);
 	}
 }
