@@ -4,13 +4,16 @@ import com.wskj.manage.system.security.CORSAuthenticationFilter;
 import com.wskj.manage.system.security.CustomFormAuthenticationFilter;
 import com.wskj.manage.system.security.ShiroSession;
 import com.wskj.manage.system.security.SystemRealm;
+import com.wskj.manage.system.service.SystemService;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.ehcache.CacheManager;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
+import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -39,11 +42,14 @@ public class ShiroConfig {
     public ShiroFilterFactoryBean shiroFilter(@Qualifier("securityManager")SecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
         shiroFilter.setSecurityManager(securityManager);
-        shiroFilter.setLoginUrl("/login");
-        shiroFilter.setUnauthorizedUrl("/eroor?code=403");
+        shiroFilter.setLoginUrl("/authc/login");
+        shiroFilter.setUnauthorizedUrl("/error?code=403");
         // 配置拦截器
         Map<String, String> filterMap = new LinkedHashMap<>(3);
-        filterMap.put("/login","authc");
+        filterMap.put("/swagger*/**","anon");
+        filterMap.put("/webjars/**","anon");
+        filterMap.put("/v2/**","anon");
+        filterMap.put("/authc/login","authc");
         filterMap.put("/error","anon");
         filterMap.put("/logout","logout");
         filterMap.put("/**","authc");
@@ -74,17 +80,27 @@ public class ShiroConfig {
 
     @Bean
     public Realm customRealm(){
-        return new SystemRealm();
+        SystemRealm systemRealm = new SystemRealm();
+        // 设定密码校验的Hash算法与迭代次数
+        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(SystemService.HASH_ALGORITHM);
+        matcher.setHashIterations(SystemService.HASH_INTERATIONS);
+        systemRealm.setCredentialsMatcher(matcher);
+        return systemRealm;
     }
 
     @Bean
     public SessionManager sessionManager() {
         ShiroSession shiroSession = new ShiroSession();
         // 多tomcat部署,使用shiro-redis开源插件管理session,或者nginx
-        shiroSession.setSessionDAO(new EnterpriseCacheSessionDAO());
+        shiroSession.setSessionDAO(sessionDao());
         shiroSession.setSessionIdCookie(new SimpleCookie("token"));
         shiroSession.setSessionIdCookieEnabled(true);
         return shiroSession;
+    }
+
+    @Bean("sessionDao")
+    public SessionDAO sessionDao() {
+        return new EnterpriseCacheSessionDAO();
     }
 
     /**

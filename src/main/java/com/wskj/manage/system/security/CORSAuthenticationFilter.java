@@ -1,15 +1,10 @@
 package com.wskj.manage.system.security;
 
-import java.io.PrintWriter;
-
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.web.filter.AccessControlFilter;
-
-import com.wskj.manage.common.JSONResult;
 
 /**
  *  自定义shiro过滤器，对 OPTIONS 请求进行过滤。

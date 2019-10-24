@@ -1,6 +1,7 @@
 package com.wskj.manage.system.security;
 
-import com.wskj.manage.common.JSONResult;
+import com.wskj.manage.common.utils.JSONResult;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.subject.Subject;
@@ -17,6 +18,7 @@ import java.io.PrintWriter;
  * @author: xuchang
  * @date: 2019/10/18
  */
+@Slf4j
 public class CustomFormAuthenticationFilter extends FormAuthenticationFilter {
 
     @Override
@@ -61,12 +63,13 @@ public class CustomFormAuthenticationFilter extends FormAuthenticationFilter {
         String message = null;
         if (IncorrectCredentialsException.class.getName().equals(className)
                 || UnknownAccountException.class.getName().equals(className)){
-            message = "用户或密码错误";
+            message = "用户名或密码错误";
         } else if (e.getMessage() != null && StringUtils.startsWith(e.getMessage(), "msg:")){
             message = StringUtils.replace(e.getMessage(), "msg:", "");
         } else{
             message = "系统出现点问题，请稍后再试！";
-            e.printStackTrace(); // 输出到控制台
+            // e.printStackTrace(); // 输出到控制台
+            log.warn("登录失败",e);
         }
         request.setAttribute("msg", message);
         return true;

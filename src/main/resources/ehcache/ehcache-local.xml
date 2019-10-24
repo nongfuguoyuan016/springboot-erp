@@ -4,7 +4,7 @@
 	<!--  prod	-->
 <!--	<diskStore path="../temp/manage/ehcache" />-->
 	<!--  local	-->
-	<diskStore path="E:\xc\temp\manage\ehcache" />
+	<diskStore path="E:\xc\temp\springboot\erp\ehcache" />
 
 	<!-- 默认缓存配置. -->
 	<defaultCache maxEntriesLocalHeap="100" eternal="false"

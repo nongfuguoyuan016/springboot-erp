@@ -1,4 +1,4 @@
-package com.wskj.manage.common;
+package com.wskj.manage.common.utils;
 
 import com.alibaba.fastjson.JSON;
 
@@ -39,6 +39,13 @@ public class JSONResult implements Serializable {
         JSONResult res = new JSONResult();
         res.setCode(SUCCESS);
         res.setMsg(msg);
+        return res;
+    }
+
+    public static JSONResult ok(Object data){
+        JSONResult res = new JSONResult();
+        res.setCode(SUCCESS);
+        res.setData(data);
         return res;
     }
 
