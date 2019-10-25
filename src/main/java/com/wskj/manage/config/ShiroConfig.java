@@ -1,5 +1,6 @@
 package com.wskj.manage.config;
 
+import com.wskj.manage.common.config.Global;
 import com.wskj.manage.system.security.CORSAuthenticationFilter;
 import com.wskj.manage.system.security.CustomFormAuthenticationFilter;
 import com.wskj.manage.system.security.ShiroSession;
@@ -21,9 +22,11 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.PropertySource;
 
 import javax.servlet.Filter;
 import java.util.LinkedHashMap;
@@ -37,6 +40,7 @@ import java.util.Map;
 @Slf4j
 public class ShiroConfig {
 
+    private String tokenName = Global.getConfig("shiro.tokenName");
 
     @Bean
     public ShiroFilterFactoryBean shiroFilter(@Qualifier("securityManager")SecurityManager securityManager) {
@@ -57,7 +61,9 @@ public class ShiroConfig {
         // 自定义拦截器
         Map<String, Filter> customFilter = new LinkedHashMap<>(1);
         customFilter.put("cors", new CORSAuthenticationFilter());
-        customFilter.put("authc", new CustomFormAuthenticationFilter());
+        CustomFormAuthenticationFilter customFormAuthenticationFilter = new CustomFormAuthenticationFilter();
+        customFormAuthenticationFilter.setTokenName(tokenName);
+        customFilter.put("authc", customFormAuthenticationFilter);
         shiroFilter.setFilters(customFilter);
         return shiroFilter;
     }
@@ -91,9 +97,10 @@ public class ShiroConfig {
     @Bean
     public SessionManager sessionManager() {
         ShiroSession shiroSession = new ShiroSession();
+        shiroSession.setTokenName(tokenName);
         // 多tomcat部署,使用shiro-redis开源插件管理session,或者nginx
         shiroSession.setSessionDAO(sessionDao());
-        shiroSession.setSessionIdCookie(new SimpleCookie("token"));
+        shiroSession.setSessionIdCookie(new SimpleCookie(tokenName));
         shiroSession.setSessionIdCookieEnabled(true);
         return shiroSession;
     }

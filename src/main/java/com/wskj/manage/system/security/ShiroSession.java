@@ -22,8 +22,12 @@ public class ShiroSession extends DefaultWebSessionManager {
     /**
      * 定义请求头中使用的标记key,用来传递token
      */
-    private static final String TOKEN = "token";
+//    private static final String TOKEN = "token";
+    private String tokenName;
 
+    public void setTokenName(String tokenName) {
+        this.tokenName = tokenName;
+    }
 
     private static final String REFERENCED_SESSION_ID_SOURCE = "Stateless request";
 
@@ -42,7 +46,7 @@ public class ShiroSession extends DefaultWebSessionManager {
     @Override
     protected Serializable getSessionId(ServletRequest request, ServletResponse response) {
         // 获取请求头中的TOKEN值,即sessionId
-        String sessionId = WebUtils.toHttp(request).getHeader(TOKEN);
+        String sessionId = WebUtils.toHttp(request).getHeader(tokenName);
         if (StringUtils.isEmpty(sessionId)) {
             // 如果没有携带id参数则按照父类的方法在cookie中获取sessionId
             return super.getSessionId(request, response);

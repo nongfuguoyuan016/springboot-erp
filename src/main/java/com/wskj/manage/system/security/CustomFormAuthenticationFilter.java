@@ -1,5 +1,6 @@
 package com.wskj.manage.system.security;
 
+import com.sun.corba.se.impl.oa.toa.TOA;
 import com.wskj.manage.common.utils.JSONResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 
 /**
  * 继承shiro 的form表单过滤器
@@ -20,6 +22,12 @@ import java.io.PrintWriter;
  */
 @Slf4j
 public class CustomFormAuthenticationFilter extends FormAuthenticationFilter {
+
+    private String tokenName;
+
+    public void setTokenName(String tokenName) {
+        this.tokenName = tokenName;
+    }
 
     @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) {
@@ -41,12 +49,24 @@ public class CustomFormAuthenticationFilter extends FormAuthenticationFilter {
         PrintWriter writer = null;
         try {
             writer = res.getWriter();
-            writer.write(JSONResult.ok("登录成功").toString());
+            writer.write(JSONResult.ok("登录成功",getToken(res)).toString());
             writer.close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
         return false;
+    }
+
+    private String getToken(HttpServletResponse res) {
+        String cookie = res.getHeader("set-cookie");
+        if (StringUtils.isNotEmpty(cookie)) {
+            tokenName = StringUtils.isNotEmpty(tokenName) ? tokenName :"token";
+            String str = tokenName + "=";
+            int index = cookie.indexOf(str);
+            cookie = cookie.substring(index + str.length());
+            cookie = cookie.split(";")[0];
+        }
+        return cookie;
     }
 
     /**
