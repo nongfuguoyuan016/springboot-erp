@@ -44,16 +44,16 @@ public class FastJsonUtils {
     }
 
     /**
-     * 集合转JSONObject,仅序列化指定属性
+     * 对象转JSONObject,仅序列化指定属性
      * @param obj
      * @param props
      * @return
      */
-    public static Object toJsonObjectIncludeProperties(Object obj, String... props){
+    public static JSONObject toJsonObjectIncludeProperties(Object obj, String... props){
         if (obj == null) {
             return null;
         }
-        return JSONObject.parse(toJsonStringIncludeProperties(obj,props));
+        return JSONObject.parseObject(toJsonStringIncludeProperties(obj,props));
     }
 
 }

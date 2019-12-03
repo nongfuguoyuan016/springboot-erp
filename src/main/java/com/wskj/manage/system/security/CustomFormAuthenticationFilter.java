@@ -46,6 +46,7 @@ public class CustomFormAuthenticationFilter extends FormAuthenticationFilter {
         HttpServletResponse res = (HttpServletResponse) response;
         res.setStatus(HttpServletResponse.SC_OK);
         res.setCharacterEncoding("UTF-8");
+        res.setContentType("application/json; charset=utf8");
         PrintWriter writer = null;
         try {
             writer = res.getWriter();

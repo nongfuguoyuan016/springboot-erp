@@ -1,10 +1,7 @@
 package com.wskj.manage.config;
 
 import com.wskj.manage.common.config.Global;
-import com.wskj.manage.system.security.CORSAuthenticationFilter;
-import com.wskj.manage.system.security.CustomFormAuthenticationFilter;
-import com.wskj.manage.system.security.ShiroSession;
-import com.wskj.manage.system.security.SystemRealm;
+import com.wskj.manage.system.security.*;
 import com.wskj.manage.system.service.SystemService;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.ehcache.CacheManager;
@@ -12,6 +9,7 @@ import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.session.SessionListener;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
@@ -29,7 +27,9 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 
 import javax.servlet.Filter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,7 +43,8 @@ public class ShiroConfig {
     private String tokenName = Global.getConfig("shiro.tokenName");
 
     @Bean
-    public ShiroFilterFactoryBean shiroFilter(@Qualifier("securityManager")SecurityManager securityManager) {
+    public ShiroFilterFactoryBean shiroFilter(@Qualifier("securityManager")SecurityManager securityManager,
+                                              @Qualifier("sessionDao") SessionDAO sessionDao) {
         ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
         shiroFilter.setSecurityManager(securityManager);
         shiroFilter.setLoginUrl("/authc/login");
@@ -56,23 +57,36 @@ public class ShiroConfig {
         filterMap.put("/authc/login","authc");
         filterMap.put("/error","anon");
         filterMap.put("/logout","logout");
-        filterMap.put("/**","authc");
+        filterMap.put("/**","cors,token,user");
         shiroFilter.setFilterChainDefinitionMap(filterMap);
         // 自定义拦截器
-        Map<String, Filter> customFilter = new LinkedHashMap<>(1);
-        customFilter.put("cors", new CORSAuthenticationFilter());
+        Map<String, Filter> customFilter = new LinkedHashMap<>(4);
+        // 登录拦截器
         CustomFormAuthenticationFilter customFormAuthenticationFilter = new CustomFormAuthenticationFilter();
         customFormAuthenticationFilter.setTokenName(tokenName);
         customFilter.put("authc", customFormAuthenticationFilter);
+        // 登出拦截器
+        customFilter.put("logout",new LogoutFilter());
+        // 跨域拦截器
+        customFilter.put("cors", new CORSAuthenticationFilter());
+        // token拦截器
+        TokenFilter tokenFilter = new TokenFilter();
+        tokenFilter.setTokenName(tokenName);
+        customFilter.put("token",tokenFilter);
+        // session过期拦截器
+        SessionExpirationFilter sessionExpirationFilter = new SessionExpirationFilter();
+        customFilter.put("user",sessionExpirationFilter);
+        // 添加到shiro过滤器中
         shiroFilter.setFilters(customFilter);
         return shiroFilter;
     }
 
     @Bean("securityManager")
-    public SecurityManager securityManager(@Qualifier("shiroCacheManager") EhCacheManager shiroCacheManager){
+    public SecurityManager securityManager(@Qualifier("shiroCacheManager") EhCacheManager shiroCacheManager,
+                                           @Qualifier("sessionManager") SessionManager sessionManager){
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
         securityManager.setRealm(customRealm());
-        securityManager.setSessionManager(sessionManager());
+        securityManager.setSessionManager(sessionManager);
         securityManager.setCacheManager(shiroCacheManager);
         return securityManager;
     }
@@ -94,20 +108,28 @@ public class ShiroConfig {
         return systemRealm;
     }
 
-    @Bean
-    public SessionManager sessionManager() {
+    @Bean("sessionManager")
+    public SessionManager sessionManager(@Qualifier("sessionDao") SessionDAO sessionDao) {
         ShiroSession shiroSession = new ShiroSession();
         shiroSession.setTokenName(tokenName);
         // 多tomcat部署,使用shiro-redis开源插件管理session,或者nginx
-        shiroSession.setSessionDAO(sessionDao());
+        shiroSession.setSessionDAO(sessionDao);
         shiroSession.setSessionIdCookie(new SimpleCookie(tokenName));
         shiroSession.setSessionIdCookieEnabled(true);
+        // 会话超时时间,毫秒
+        shiroSession.setGlobalSessionTimeout(30*60*1000);
+        List<SessionListener> listeners = new ArrayList<>(1);
+        listeners.add(new ShiroSessionListener());
+        shiroSession.setSessionListeners(listeners);
         return shiroSession;
     }
 
     @Bean("sessionDao")
-    public SessionDAO sessionDao() {
-        return new EnterpriseCacheSessionDAO();
+    public SessionDAO sessionDao(@Qualifier ("shiroCacheManager")EhCacheManager shiroCacheManager) {
+        EnterpriseCacheSessionDAO sessionDAO = new EnterpriseCacheSessionDAO();
+        sessionDAO.setActiveSessionsCacheName("activeSessionsCache");
+        sessionDAO.setCacheManager(shiroCacheManager);
+        return sessionDAO;
     }
 
     /**

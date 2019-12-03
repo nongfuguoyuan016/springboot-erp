@@ -309,15 +309,17 @@ public class SystemService extends BaseService implements InitializingBean {
 	
 	@Transactional(readOnly = false)
 	public void saveMenu(Menu menu) {
-		
+		if (menu.getType() == null || 1 == menu.getType()) {
+			menu.setParentId(Menu.getRootId());
+		}
 		// 获取父节点实体
-		menu.setParent(this.getMenu(menu.getParent().getId()));
+		Menu parent = this.getMenu(menu.getParentId());
 		
 		// 获取修改前的parentIds，用于更新子节点的parentIds
 		String oldParentIds = menu.getParentIds(); 
 		
 		// 设置新的父节点串
-		menu.setParentIds(menu.getParent().getParentIds()+menu.getParent().getId()+",");
+		menu.setParentIds(parent.getParentIds()+menu.getParentId()+",");
 
 		// 保存或更新实体
 		if (StringUtils.isBlank(menu.getId())){
@@ -364,18 +366,6 @@ public class SystemService extends BaseService implements InitializingBean {
 //		systemRealm.clearAllCachedAuthorizationInfo();
 		// 清除日志相关缓存
 		CacheUtils.remove(LogUtils.CACHE_MENU_NAME_PATH_MAP);
-	}
-	
-	/**
-	 * 获取Key加载信息
-	 */
-	public static boolean printKeyLoadMessage(){
-		StringBuilder sb = new StringBuilder();
-		sb.append("\r\n======================================================================\r\n");
-		sb.append("\r\n    欢迎使用 "+ Global.getConfig("productName")+"  - Powered By http://wskj.com\r\n");
-		sb.append("\r\n======================================================================\r\n");
-		System.out.println(sb.toString());
-		return true;
 	}
 
 	@Override

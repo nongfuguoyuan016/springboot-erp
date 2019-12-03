@@ -1,18 +1,13 @@
 package com.wskj.manage.common.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.wskj.manage.common.enums.ResultCodeEnum;
 
 import java.io.Serializable;
 
 public class JSONResult implements Serializable {
 
     private static final long serialVersionUID = 3147082039461940823L;
-
-    public static final int SUCCESS = 0;
-
-    public static final int FAIL = 1;
-
-    public static final int EXCEPTION = 2;
 
     private int code;
 
@@ -30,21 +25,21 @@ public class JSONResult implements Serializable {
 
     public static JSONResult ok(){
         JSONResult res = new JSONResult();
-        res.setCode(SUCCESS);
-        res.setMsg("操作成功");
+        res.setCode(ResultCodeEnum.SUCCESS.getCode());
+        res.setMsg(ResultCodeEnum.SUCCESS.getMsg());
         return res;
     }
 
     public static JSONResult ok(String msg){
         JSONResult res = new JSONResult();
-        res.setCode(SUCCESS);
+        res.setCode(ResultCodeEnum.SUCCESS.getCode());
         res.setMsg(msg);
         return res;
     }
 
     public static JSONResult ok(Object data){
         JSONResult res = new JSONResult();
-        res.setCode(SUCCESS);
+        res.setCode(ResultCodeEnum.SUCCESS.getCode());
         res.setData(data);
         return res;
     }
@@ -57,7 +52,7 @@ public class JSONResult implements Serializable {
 
     public static JSONResult fail(String msg){
         JSONResult res = new JSONResult();
-        res.setCode(FAIL);
+        res.setCode(ResultCodeEnum.FAIL.getCode());
         res.setMsg(msg);
         return res;
     }
@@ -70,14 +65,14 @@ public class JSONResult implements Serializable {
 
     public static JSONResult ex(Throwable e){
         JSONResult res = new JSONResult();
-        res.setCode(EXCEPTION);
+        res.setCode(ResultCodeEnum.EXCEPTION.getCode());
         res.setMsg(e.getMessage());
         return res;
     }
 
     public static JSONResult ex(String msg){
         JSONResult res = new JSONResult();
-        res.setCode(EXCEPTION);
+        res.setCode(ResultCodeEnum.EXCEPTION.getCode());
         res.setMsg(msg);
         return res;
     }

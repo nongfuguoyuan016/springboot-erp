@@ -1,13 +1,5 @@
 package com.wskj.manage.system.web;
 
-import java.util.List;
-
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import com.wskj.manage.common.config.Global;
 import com.wskj.manage.common.utils.JSONResult;
 import com.wskj.manage.common.utils.StringUtils;
@@ -15,8 +7,11 @@ import com.wskj.manage.common.web.BaseController;
 import com.wskj.manage.system.entity.Role;
 import com.wskj.manage.system.service.SystemService;
 import com.wskj.manage.system.utils.UserUtils;
-
-import javax.validation.Valid;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 角色Controller
@@ -45,7 +40,7 @@ public class RoleController extends BaseController {
 	
 	@RequiresPermissions("sys:role:edit")
 	@PostMapping(value = "save")
-	public JSONResult save(@Valid Role role, BindingResult error) {
+	public JSONResult save(@Validated Role role, BindingResult error) {
 		if(!UserUtils.getUser().isAdmin()&&role.getSysData().equals(Global.YES)){
 			return JSONResult.fail("越权操作！");
 		}
@@ -64,7 +59,7 @@ public class RoleController extends BaseController {
 	
 	@RequiresPermissions("sys:role:edit")
 	@GetMapping(value = "delete")
-	public JSONResult delete(Role role, RedirectAttributes redirectAttributes) {
+	public JSONResult delete(Role role) {
 		if(!UserUtils.getUser().isAdmin() && role.getSysData().equals(Global.YES)){
 			return JSONResult.fail("越权操作，只有超级管理员才能修改此数据！");
 		}

@@ -14,10 +14,8 @@ import com.wskj.manage.common.utils.StringUtils;
 
 /**
  * 角色Entity
- * @author ganjinhua
- * @version 2013-12-05
  */
-public class Role extends DataEntity<Role> {
+public class  Role extends DataEntity<Role> {
 	
 	private static final long serialVersionUID = 1L;
 	private Office office;	// 归属机构

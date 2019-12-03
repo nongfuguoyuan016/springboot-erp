@@ -3,7 +3,9 @@
  */
 package com.wskj.manage.common.persistence;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import com.wskj.manage.common.utils.Reflections;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +24,8 @@ public abstract class TreeEntity<T> extends DataEntity<T> {
 
 	protected T parent;	// 父级编号
 	protected String parentIds; // 所有父级编号
+	@NotEmpty
+	@Size(max = 100)
 	protected String name; 	// 机构名称
 	protected Integer sort;		// 排序
 	
@@ -39,7 +43,6 @@ public abstract class TreeEntity<T> extends DataEntity<T> {
 	 * @return
 	 */
 	@JsonBackReference
-	@NotNull
 	public abstract T getParent();
 
 	/**
@@ -48,7 +51,6 @@ public abstract class TreeEntity<T> extends DataEntity<T> {
 	 */
 	public abstract void setParent(T parent);
 
-	@Length(min=1, max=2000)
 	public String getParentIds() {
 		return parentIds;
 	}
@@ -57,7 +59,6 @@ public abstract class TreeEntity<T> extends DataEntity<T> {
 		this.parentIds = parentIds;
 	}
 
-	@Length(min=1, max=100)
 	public String getName() {
 		return name;
 	}

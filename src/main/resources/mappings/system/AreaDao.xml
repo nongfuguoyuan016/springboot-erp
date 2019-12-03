@@ -4,7 +4,7 @@
 
 	<sql id="areaColumns">
 		a.id,
-		a.parent_id AS "parent.id",
+		a.parent_id AS "parentId",
 		a.parent_ids,
 		a.code,
 		a.name,
@@ -16,11 +16,15 @@
 		a.update_by AS "updateBy.id",
 		a.update_date,
 		a.del_flag,
-		p.name AS "parent.name"
+		a.parent_id AS "parent.id",
+		sa.name AS "parent.name",
+		sa.code AS "parent.code",
+		sa.type AS "parent.type",
+		sa.name AS "parent.name"
 	</sql>
 
 	<sql id="areaJoins">
-		LEFT JOIN sys_office p ON p.id = a.parent_id
+		LEFT JOIN sys_area sa ON sa.id = a.parent_id
 	</sql>
 
 	<select id="get" resultType="Area">
@@ -48,14 +52,14 @@
 		<include refid="areaColumns" />
 		FROM sys_area a
 		<include refid="areaJoins" />
-		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		WHERE a.del_flag = '0'
 		ORDER BY a.code
 	</select>
 
 	<select id="findByParentIdsLike" resultType="Area">
 		SELECT
 		a.id,
-		a.parent_id AS "parent.id",
+		a.parent_id AS "parentId",
 		a.parent_ids
 		FROM sys_area a
 		WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND a.parent_ids
@@ -80,7 +84,7 @@
 		del_flag
 		) VALUES (
 		#{id},
-		#{parent.id},
+		#{parentId},
 		#{parentIds},
 		#{code},
 		#{name},
@@ -97,7 +101,7 @@
 
 	<update id="update">
 		UPDATE sys_area SET
-		parent_id = #{parent.id},
+		parent_id = #{parentId},
 		parent_ids = #{parentIds},
 		code = #{code},
 		name = #{name},
@@ -111,7 +115,7 @@
 
 	<update id="updateParentIds">
 		UPDATE sys_area SET
-		parent_id = #{parent.id},
+		parent_id = #{parentId},
 		parent_ids = #{parentIds}
 		WHERE id = #{id}
 	</update>
@@ -119,9 +123,7 @@
 	<update id="delete">
 		UPDATE sys_area SET
 		del_flag = #{DEL_FLAG_DELETE}
-		WHERE id = #{id} OR parent_ids LIKE
-		<if test="dbName == 'oracle'">'%,'||#{id}||',%'</if>
-		<if test="dbName == 'mysql'">CONCAT('%,', #{id}, ',%')</if>
+		WHERE id = #{id} OR parent_ids LIKE CONCAT('%,', #{id}, ',%')
 	</update>
 
 </mapper>

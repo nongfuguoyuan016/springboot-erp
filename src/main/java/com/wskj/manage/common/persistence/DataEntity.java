@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wskj.manage.common.utils.IdGen;
 import com.wskj.manage.common.utils.StringUtils;
 import com.wskj.manage.system.entity.User;
-//import com.wskj.manage.system.utils.UserUtils;
+import com.wskj.manage.system.utils.UserUtils;
 
 /**
  * 数据Entity类
@@ -49,11 +49,11 @@ public abstract class DataEntity<T> extends BaseEntity<T> {
 		if (!this.isNewRecord){
 			setId(IdGen.uuid());
 		}
-//		User user = UserUtils.getUser();
-//		if (StringUtils.isNotBlank(user.getId())){
-//			this.updateBy = user;
-//			this.createBy = user;
-//		}
+		User user = UserUtils.getUser();
+		if (StringUtils.isNotBlank(user.getId())){
+			this.updateBy = user;
+			this.createBy = user;
+		}
 		this.updateDate = new Date();
 		this.createDate = this.updateDate;
 	}
@@ -63,11 +63,11 @@ public abstract class DataEntity<T> extends BaseEntity<T> {
 	 */
 	@Override
 	public void preUpdate(){
-//		User user = UserUtils.getUser();
-//		if (StringUtils.isNotBlank(user.getId())){
-//			this.updateBy = user;
-//		}
-//		this.updateDate = new Date();
+		User user = UserUtils.getUser();
+		if (StringUtils.isNotBlank(user.getId())){
+			this.updateBy = user;
+		}
+		this.updateDate = new Date();
 	}
 	
 	@Length(min=0, max=255)

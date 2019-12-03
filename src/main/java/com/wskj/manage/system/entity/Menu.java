@@ -3,13 +3,16 @@
  */
 package com.wskj.manage.system.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
-import org.hibernate.validator.constraints.Length;
+import com.wskj.manage.common.utils.StringUtils;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wskj.manage.common.persistence.DataEntity;
 
@@ -21,17 +24,27 @@ import com.wskj.manage.common.persistence.DataEntity;
 public class Menu extends DataEntity<Menu> {
 
 	private static final long serialVersionUID = 1L;
-	private Menu parent;	// 父级菜单
+
+	private String parentId;	// 父级菜单id
 	private String parentIds; // 所有父级编号
+    @NotNull
+    @Size(max = 20)
 	private String name; 	// 名称
+    @Size(max = 200)
 	private String href; 	// 链接
 	private String target; 	// 目标（ mainFrame、_blank、_self、_parent、_top）
 	private String icon; 	// 图标
 	private Integer sort; 	// 排序
 	private String isShow; 	// 是否在菜单中显示（1：显示；0：不显示）
+    @Size(max = 200)
 	private String permission; // 权限标识
+    @NotNull
+    @Digits(integer = 1,fraction = 0)
+	private Integer type; //层级
 	
 	private String userId;
+
+	private List<Menu> children;
 	
 	public Menu(){
 		super();
@@ -42,18 +55,31 @@ public class Menu extends DataEntity<Menu> {
 	public Menu(String id){
 		super(id);
 	}
-	
-	@JsonBackReference
-	@NotNull
-	public Menu getParent() {
-		return parent;
+
+	public Integer getType() {
+		return type;
 	}
 
-	public void setParent(Menu parent) {
-		this.parent = parent;
+	public void setType(Integer type) {
+		this.type = type;
 	}
 
-	@Length(min=1, max=2000)
+	public List<Menu> getChildren() {
+		return children != null ? children : new ArrayList<>(5);
+	}
+
+	public void setChildren(List<Menu> children) {
+		this.children = children;
+	}
+
+	public String getParentId() {
+		return StringUtils.isNotEmpty(parentId) ? parentId : getRootId();
+	}
+
+	public void setParentId(String parentId) {
+		this.parentId = parentId;
+	}
+
 	public String getParentIds() {
 		return parentIds;
 	}
@@ -61,8 +87,7 @@ public class Menu extends DataEntity<Menu> {
 	public void setParentIds(String parentIds) {
 		this.parentIds = parentIds;
 	}
-	
-	@Length(min=1, max=100)
+
 	public String getName() {
 		return name;
 	}
@@ -71,7 +96,6 @@ public class Menu extends DataEntity<Menu> {
 		this.name = name;
 	}
 
-	@Length(min=0, max=2000)
 	public String getHref() {
 		return href;
 	}
@@ -80,7 +104,6 @@ public class Menu extends DataEntity<Menu> {
 		this.href = href;
 	}
 
-	@Length(min=0, max=20)
 	public String getTarget() {
 		return target;
 	}
@@ -89,7 +112,6 @@ public class Menu extends DataEntity<Menu> {
 		this.target = target;
 	}
 	
-	@Length(min=0, max=100)
 	public String getIcon() {
 		return icon;
 	}
@@ -98,7 +120,6 @@ public class Menu extends DataEntity<Menu> {
 		this.icon = icon;
 	}
 	
-	@NotNull
 	public Integer getSort() {
 		return sort;
 	}
@@ -107,7 +128,6 @@ public class Menu extends DataEntity<Menu> {
 		this.sort = sort;
 	}
 	
-	@Length(min=1, max=1)
 	public String getIsShow() {
 		return isShow;
 	}
@@ -116,39 +136,12 @@ public class Menu extends DataEntity<Menu> {
 		this.isShow = isShow;
 	}
 
-	@Length(min=0, max=200)
 	public String getPermission() {
 		return permission;
 	}
 
 	public void setPermission(String permission) {
 		this.permission = permission;
-	}
-
-	public String getParentId() {
-		return parent != null && parent.getId() != null ? parent.getId() : "0";
-	}
-
-	@JsonIgnore
-	public static void sortList(List<Menu> list, List<Menu> sourcelist, String parentId, boolean cascade){
-		for (int i=0; i<sourcelist.size(); i++){
-			Menu e = sourcelist.get(i);
-			if (e.getParent()!=null && e.getParent().getId()!=null
-					&& e.getParent().getId().equals(parentId)){
-				list.add(e);
-				if (cascade){
-					// 判断是否还有子节点, 有则继续获取子节点
-					for (int j=0; j<sourcelist.size(); j++){
-						Menu child = sourcelist.get(j);
-						if (child.getParent()!=null && child.getParent().getId()!=null
-								&& child.getParent().getId().equals(e.getId())){
-							sortList(list, sourcelist, e.getId(), true);
-							break;
-						}
-					}
-				}
-			}
-		}
 	}
 
 	@JsonIgnore

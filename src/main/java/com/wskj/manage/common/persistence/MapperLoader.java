@@ -9,12 +9,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -36,9 +35,8 @@ import org.springframework.util.StringUtils;
  */
 @Service
 @Lazy(false)
+@Slf4j
 public class MapperLoader implements DisposableBean, InitializingBean, ApplicationContextAware {
-
-	private static final Logger logger = LoggerFactory.getLogger(MapperLoader.class);
 
 	private ConfigurableApplicationContext context = null;
 	private transient String basePackage = "mappings";
@@ -55,7 +53,7 @@ public class MapperLoader implements DisposableBean, InitializingBean, Applicati
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		try {
-			logger.debug("mapperLoader bean start...");
+			log.debug("mapperLoader bean start...");
 			service = Executors.newScheduledThreadPool(1);
 			
 			// 获取xml所在包
@@ -67,7 +65,7 @@ public class MapperLoader implements DisposableBean, InitializingBean, Applicati
 			// 触发文件监听事件
 			scanner = new Scanner();
 			scanner.scan();
-			logger.debug("启动监测mapper文件变化线程...");
+			log.debug("启动监测mapper文件变化线程...");
 			service.scheduleAtFixedRate(new Task(), 5, 5, TimeUnit.SECONDS);
 
 		} catch (Exception e1) {
@@ -81,9 +79,9 @@ public class MapperLoader implements DisposableBean, InitializingBean, Applicati
 		public void run() {
 			try {
 				if (scanner.isChanged()) {
-					logger.debug("mapper文件改变,重新加载.");
+					log.debug("mapper文件改变,重新加载.");
 					scanner.reloadXML();
-					logger.debug("加载完毕.");
+					log.debug("加载完毕.");
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
